@@ -124,7 +124,7 @@ const TopicCreateButton = ({ onSuccess }: { onSuccess?: () => void }) => {
           <Plus className="h-4 w-4 text-gray-500" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[480px]">
+      <PopoverContent align="start" className="w-[420px]">
         <TopicCreateForm
           onSuccess={() => {
             onSuccess?.()
