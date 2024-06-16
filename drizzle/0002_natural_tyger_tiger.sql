@@ -1,1 +1,0 @@
-ALTER TABLE `topic` ADD `group_config` text DEFAULT '{}';

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ea4d0fbc-e38e-4839-baec-664b67ed2171",
+  "id": "07dd21ba-bcf9-4a0e-9f93-3b99eb87c1b5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "thread": {
@@ -25,7 +25,7 @@
           "name": "topic_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "thread_content": {
@@ -42,13 +42,20 @@
           "notNull": false,
           "autoincrement": false
         },
-        "is_task": {
-          "name": "is_task",
-          "type": "integer",
+        "command": {
+          "name": "command",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": false
+          "default": "'None'"
         },
         "task_done_at": {
           "name": "task_done_at",
@@ -161,7 +168,23 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": 0
+          "default": false
+        },
+        "group_name": {
+          "name": "group_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'default'"
+        },
+        "group_config": {
+          "name": "group_config",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'{}'"
         },
         "created_at": {
           "name": "created_at",
@@ -179,7 +202,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

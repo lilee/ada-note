@@ -1,10 +1,11 @@
 CREATE TABLE `thread` (
 	`id` text PRIMARY KEY NOT NULL,
 	`lead_thread_id` text,
-	`topic_id` text,
+	`topic_id` text NOT NULL,
 	`thread_content` text NOT NULL,
 	`group_name` text,
-	`is_task` integer DEFAULT false NOT NULL,
+	`command` text,
+	`color` text DEFAULT 'None' NOT NULL,
 	`task_done_at` integer,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
@@ -19,10 +20,12 @@ CREATE TABLE `topic` (
 	`topic_name` text NOT NULL,
 	`builtin_topic_name` text,
 	`topic_desc` text,
-	`pin` integer DEFAULT 0 NOT NULL,
+	`pin` integer DEFAULT false NOT NULL,
+	`group_name` text DEFAULT 'default' NOT NULL,
+	`group_config` text DEFAULT '{}',
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
-	`user_id` integer,
+	`user_id` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
