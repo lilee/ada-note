@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useTransition } from 'react'
+import { FormEvent, useState, useTransition } from 'react'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -12,21 +12,23 @@ import {
 } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
-import { login } from '~/actions/auth'
+import { signUp } from '~/actions/auth'
 
-export function LoginForm() {
+export function SignUpForm() {
   const [isPending, startTransition] = useTransition()
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    startTransition(() => login(formData))
+    startTransition(() => signUp(formData))
   }
   return (
     <form onSubmit={handleSubmit}>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>Enter your email below to login to your account.</CardDescription>
+          <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardDescription>
+            Enter your email and password below to create an account.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
@@ -47,7 +49,7 @@ export function LoginForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isPending}>
-            Sign in
+            Sign up
           </Button>
         </CardFooter>
       </Card>
