@@ -2,7 +2,7 @@
 // by running `wrangler types --env-interface CloudflareEnv env.d.ts`
 
 interface CloudflareEnv {
-  AUTH_SECRET: 'MohY0/2zSQw/psWEnejC2ka3Al0oifvY4YjOkUaFfnI='
-  AUTH_URL: 'https://ada-note.pages.dev'
+  AUTH_SECRET: string
+  AUTH_URL: string
   DB: D1Database
 }
