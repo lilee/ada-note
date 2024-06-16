@@ -12,11 +12,11 @@ export const TopicGroupSelect = ({
 }) => {
   return (
     <div className="flex gap-2">
-      <TopicGroupButton group={null} menu />
+      {groups.length > 0 && <TopicGroupButton group={null} menu />}
       {groups.map(group => (
         <TopicGroupButton key={group.group_name} group={group} menu />
       ))}
-      <TopicGroupConfig groupConfig={groupConfig} />
+      {groups.length > 0 && <TopicGroupConfig groupConfig={groupConfig} />}
     </div>
   )
 }

@@ -4,13 +4,16 @@ import {
   BotMessageSquare as AskIcon,
   Calendar as JournalIcon,
   Bookmark as PinIcon,
+  Plus,
   ListTodo as TaskIcon,
   UserRoundCog as UserIcon,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { getTopics } from '~/actions/topic'
+import { TopicCreateForm } from '~/components/topic'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -20,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { useFetchAction } from '~/lib/client-utils'
 
 const mainMenuItems = [
@@ -87,11 +91,13 @@ export const UserMenu = () => {
 
 export const TopicsMenu = () => {
   const path = usePathname()
-  const { data: topics } = useFetchAction(getTopics, {
-    refreshKey: 'topics',
-  })
+  const { data: topics, refetch } = useFetchAction(getTopics)
   return (
     <nav className="main-menu">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs text-gray-500">Topics</h2>
+        <TopicCreateButton onSuccess={refetch} />
+      </div>
       {topics?.map(t => (
         <Link
           key={`topic-${t.id}`}
@@ -106,5 +112,26 @@ export const TopicsMenu = () => {
         </Link>
       ))}
     </nav>
+  )
+}
+
+const TopicCreateButton = ({ onSuccess }: { onSuccess?: () => void }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Plus className="h-4 w-4 text-gray-500" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[480px]">
+        <TopicCreateForm
+          onSuccess={() => {
+            onSuccess?.()
+            setOpen(false)
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
