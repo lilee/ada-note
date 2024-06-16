@@ -1,6 +1,6 @@
 import { Notebook } from 'lucide-react'
 import Link from 'next/link'
-import { MainMenu, MainMenuFooter, PinTopics, UserMenu } from './layout-components'
+import { MainMenu, MainMenuFooter, TopicsMenu, UserMenu } from './layout-components'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +17,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <MainMenu />
             <hr className="my-2" />
-            <PinTopics />
+            <TopicsMenu />
           </div>
         </div>
       </div>

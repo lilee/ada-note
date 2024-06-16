@@ -1,18 +1,25 @@
 'use client'
 
-import { useRef, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '~/components/ui/button'
 import { TextareaExtend } from '~/components/ui/textarea-extend'
 
 export const ThreadFormCreate = ({
+  defaultValue,
   onSubmit,
   onCancel,
 }: {
+  defaultValue?: string
   onSubmit: (formData: FormData) => Promise<void>
   onCancel?: () => void
 }) => {
+  const [defaultValue_, setDefaultValue] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const [pending, startTransition] = useTransition()
+  useEffect(() => {
+    console.log('setDefaultValue', defaultValue)
+    setDefaultValue(defaultValue ?? '')
+  })
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -28,6 +35,7 @@ export const ThreadFormCreate = ({
       <TextareaExtend
         name="thread_content"
         placeholder="What's on your mind?"
+        defaultValue={defaultValue_}
         className="bg-white"
         disabled={pending}
         onSubmit={() => {

@@ -1,6 +1,6 @@
-import { getTopicThreadGroups, getTopicThreads } from '~/actions/topic'
+import { getTopicThreads } from '~/actions/topic'
 import { ThreadCardList } from '~/components/thread'
-import { ThreadGroupSelect } from '~/components/thread'
+import { TopicGroupSelect } from '~/components/topic'
 import { CreateForm } from './create-form'
 
 export const runtime = 'edge'
@@ -20,13 +20,12 @@ const Page = async ({
 }) => {
   const { id: topic_id } = params
   const { group } = searchParams
-  const threads = await getTopicThreads(topic_id, { groupName: group })
-  const groups = await getTopicThreadGroups(topic_id)
+  const { topic, thread_groups, threads } = await getTopicThreads(topic_id, { groupName: group })
 
   return (
     <div className="sm:w-full md:w-[768px] mx-auto flex flex-col gap-4 lg:gap-6">
-      <CreateForm topicId={topic_id} />
-      <ThreadGroupSelect groups={groups} />
+      <CreateForm topicId={topic.id} />
+      <TopicGroupSelect groups={thread_groups} groupConfig={topic.group_config} />
       <ThreadCardList threads={threads} />
     </div>
   )

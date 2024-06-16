@@ -9,6 +9,7 @@ import { parseThreadContent } from './util'
 import { ThreadFollowItem } from './thread-follow-item'
 import { deleteThread, updateThread } from '~/actions/thread'
 import ThreadTime from './thread-time'
+import { TopicGroupButton } from '~/components/topic/topic-group-button'
 
 export const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
@@ -42,8 +43,8 @@ export const ThreadCard = ({ thread }: { thread: ThreadData }) => {
     <Card>
       <CardHeader className="p-4 space-y-1" onDoubleClick={() => setEditing(true)}>
         <div className="flex justify-between">
-          <CardTitle className="text-sm flex gap-1">
-            {thread.group_name && <span>[{thread.group_name}]</span>}
+          <CardTitle className="text-sm flex gap-1 items-center">
+            {thread.group_name && <TopicGroupButton group={{ group_name: thread.group_name }} />}
             {thread_title}
           </CardTitle>
           <div className="flex gap-1 text-xs text-gray-500">

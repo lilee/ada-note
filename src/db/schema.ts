@@ -25,6 +25,10 @@ export const users = sqliteTable('user', {
     .notNull(),
 })
 
+export type ThreadGroupConfig = {
+  [group_name: string]: { seq?: string }
+}
+
 export const topics = sqliteTable('topic', {
   id: text('id')
     .primaryKey()
@@ -33,6 +37,8 @@ export const topics = sqliteTable('topic', {
   builtin_topic_name: text('builtin_topic_name').unique(),
   topic_desc: text('topic_desc'),
   pin: integer('pin', { mode: 'boolean' }).notNull().default(false),
+  group_name: text('group_name').notNull().default('default'),
+  group_config: text('group_config', { mode: 'json' }).$type<ThreadGroupConfig>().default({}),
   created_at: integer('created_at', {
     mode: 'timestamp',
   })
@@ -56,7 +62,10 @@ export const threads = sqliteTable('thread', {
     .notNull(),
   thread_content: text('thread_content').notNull(),
   group_name: text('group_name'),
-  is_task: integer('is_task', { mode: 'boolean' }).notNull().default(false),
+  command: text('command'),
+  color: text('color', { enum: ['None', 'Highlight', 'Task', 'Idea'] })
+    .notNull()
+    .default('None'),
   task_done_at: integer('task_done_at', {
     mode: 'timestamp',
   }),

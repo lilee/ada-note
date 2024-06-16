@@ -3,13 +3,14 @@
 import {
   BotMessageSquare as AskIcon,
   Calendar as JournalIcon,
-  BookType as TopicsIcon,
   Bookmark as PinIcon,
+  ListTodo as TaskIcon,
   UserRoundCog as UserIcon,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { getTopics } from '~/actions/topic'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -20,11 +21,10 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { useFetchAction } from '~/lib/client-utils'
-import { getPinTopics } from '~/actions/topic'
 
 const mainMenuItems = [
   { href: '/journal', label: 'Journal', Icon: JournalIcon },
-  { href: '/topics', label: 'Topics', Icon: TopicsIcon },
+  { href: '/tasks', label: 'Tasks', Icon: TaskIcon },
   { href: '/ask', label: 'Ask', Icon: AskIcon },
 ]
 export const MainMenu = () => {
@@ -85,10 +85,10 @@ export const UserMenu = () => {
   )
 }
 
-export const PinTopics = () => {
+export const TopicsMenu = () => {
   const path = usePathname()
-  const { data: topics } = useFetchAction(getPinTopics, {
-    refreshKey: 'pin-topics',
+  const { data: topics } = useFetchAction(getTopics, {
+    refreshKey: 'topics',
   })
   return (
     <nav className="main-menu">

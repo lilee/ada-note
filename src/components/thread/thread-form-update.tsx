@@ -28,6 +28,7 @@ export const ThreadFormUpdate = ({
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     startTransition(async () => {
+      console.log('contentState', contentState)
       if (!contentState) {
         await onDelete?.()
       } else {

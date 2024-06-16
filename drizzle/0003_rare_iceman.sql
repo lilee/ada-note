@@ -1,0 +1,1 @@
+ALTER TABLE `topic` ADD `group_name` text DEFAULT 'default' NOT NULL;

@@ -1,19 +1,17 @@
 'use client'
 
-import { Check, CheckCircle } from 'lucide-react'
-import { MouseEvent, startTransition, useState } from 'react'
+import { startTransition, useState } from 'react'
 import { deleteThread, updateThread } from '~/actions/thread'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { cn } from '~/lib/utils'
 import { ThreadData } from '~/types'
 import { ThreadFormUpdate } from './thread-form-update'
 import ThreadTime from './thread-time'
+import { TopicGroupButton } from '~/components/topic/topic-group-button'
 
 export const ThreadFollowItem = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
@@ -53,6 +51,7 @@ export const ThreadFollowItem = ({ thread }: { thread: ThreadData }) => {
         ) : (
           <pre>{thread.thread_content}</pre>
         )}
+        {thread.command && <ThreadCommand command={thread.command} />}
       </div>
     </div>
   )
@@ -69,4 +68,25 @@ const ThreadDot = ({ onTodoChange }: { onTodoChange?: (status: 'done' | 'doing')
       <DropdownMenuContent align="start" className="p-3 w-[180px]"></DropdownMenuContent>
     </DropdownMenu>
   )
+}
+
+const ThreadCommand = ({ command }: { command: string }) => {
+  const [cmd, ...args] = command.split(' ')
+  if (cmd == '/group') {
+    const [toGroup, fromGroup] = args
+    return (
+      <div className="mt-2 flex gap-2 items-center">
+        <div className="h-5 px-2 text-xs rounded-full bg-blue-50 border border-blue-400 text-blue-500">
+          change group
+        </div>
+        {fromGroup && (
+          <>
+            <TopicGroupButton group={{ group_name: fromGroup }} /> →{' '}
+          </>
+        )}
+        <TopicGroupButton group={{ group_name: toGroup }} />
+      </div>
+    )
+  }
+  return null
 }

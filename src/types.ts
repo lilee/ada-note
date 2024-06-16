@@ -8,3 +8,9 @@ export type ThreadData = ThreadSelect & { follows?: ThreadSelect[] }
 export type TopicData = TopicSelect
 export type TopicCreate = typeof topics.$inferInsert
 export type TopicUpdate = SQLiteUpdateSetSource<typeof topics>
+
+export type ThreadGroup = {
+  group_name: string
+  seq?: string
+  children?: string[]
+}
