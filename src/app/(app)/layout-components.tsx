@@ -2,8 +2,10 @@
 
 import {
   BotMessageSquare as AskIcon,
+  ChevronDown,
   Calendar as JournalIcon,
-  Bookmark as PinIcon,
+  Pencil,
+  BookType as TopicIcon,
   Plus,
   ListTodo as TaskIcon,
   UserRoundCog as UserIcon,
@@ -11,20 +13,24 @@ import {
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { getTopics } from '~/actions/topic'
-import { TopicCreateForm } from '~/components/topic'
+import { useEffect, useState } from 'react'
+import { createTopic, getTopics, updateTopic } from '~/actions/topic'
+import { TopicForm } from '~/components/topic/topic-form'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { useFetchAction } from '~/lib/client-utils'
+import { refreshAction, useFetchAction } from '~/lib/client-utils'
+import { TopicData } from '~/types'
+import { cn } from '../../lib/utils'
 
 const mainMenuItems = [
   { href: '/journal', label: 'Journal', Icon: JournalIcon },
@@ -90,28 +96,67 @@ export const UserMenu = () => {
 }
 
 export const TopicsMenu = () => {
-  const path = usePathname()
-  const { data: topics, refetch } = useFetchAction(getTopics)
+  const [group, setGroup] = useState('All')
+  const { data: topics, refetch } = useFetchAction(getTopics, {
+    refreshKey: 'topics',
+  })
+  const groupSet = new Set<string>(topics?.map(t => t.group_name?.trim()!).filter(Boolean))
+  const groups = Array.from(groupSet)
+
+  useEffect(() => {
+    setGroup(localStorage.getItem('topic-group') ?? 'All')
+  }, [])
+
+  const handleGroupChange = (value: string) => {
+    localStorage.setItem('topic-group', value)
+    setGroup(value)
+  }
+
   return (
     <nav className="main-menu">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs text-gray-500">Topics</h2>
+        <TopicGroups groups={groups} value={group} onChange={handleGroupChange} />
         <TopicCreateButton onSuccess={refetch} />
       </div>
-      {topics?.map(t => (
-        <Link
-          key={`topic-${t.id}`}
-          href={`/topics/${t.id}`}
-          className="main-menu-item"
-          data-active={path === `/topics/${t.id}`}
-        >
-          <div className="main-menu-item-left">
-            <PinIcon className="w-4 h-4" />
-          </div>
-          <span className="text-xs">{t.topic_name}</span>
-        </Link>
-      ))}
+      {topics
+        ?.filter(t => group === 'All' || t.group_name?.trim() === group.trim())
+        .map(t => (
+          <TopicItem key={t.id} topic={t} />
+        ))}
     </nav>
+  )
+}
+
+const TopicGroups = ({
+  groups,
+  value,
+  onChange,
+}: {
+  groups: string[]
+  value: string
+  onChange: (value: string) => void
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <h2 className="text-xs text-gray-500 flex items-center gap-1">
+          <span>Topics: {value}</span>
+          <ChevronDown className="w-3 h-3" />
+        </h2>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+          <DropdownMenuRadioItem value="All">
+            <span className="text-xs font-medium">All</span>
+          </DropdownMenuRadioItem>
+          {groups.map(group => (
+            <DropdownMenuRadioItem key={group} value={group}>
+              <span className="text-xs font-medium">{group}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -120,13 +165,61 @@ const TopicCreateButton = ({ onSuccess }: { onSuccess?: () => void }) => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon-sm">
           <Plus className="h-4 w-4 text-gray-500" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[420px]">
-        <TopicCreateForm
-          onSuccess={() => {
+      <PopoverContent align="start" className="w-[300px]">
+        <TopicForm
+          onSubmit={async formData => {
+            await createTopic(formData)
+            onSuccess?.()
+            setOpen(false)
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+const TopicItem = ({ topic }: { topic: TopicData }) => {
+  const path = usePathname()
+  const [hover, setHover] = useState(false)
+  return (
+    <Link
+      href={`/topics/${topic.id}`}
+      className="main-menu-item"
+      data-active={path.startsWith(`/topics/${topic.id}`)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <div className="flex gap-1 items-center">
+        <TopicIcon className="w-4 h-4" />
+        <span className="text-xs">{topic.topic_name}</span>
+      </div>
+      <div
+        className={cn({
+          invisible: !hover,
+        })}
+      >
+        <TopicEditButton topic={topic} onSuccess={() => refreshAction('topics')} />
+      </div>
+    </Link>
+  )
+}
+
+const TopicEditButton = ({ topic, onSuccess }: { topic: TopicData; onSuccess?: () => void }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Pencil className="w-3 h-3 text-gray-400" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[300px]">
+        <TopicForm
+          topic={topic}
+          onSubmit={async formData => {
+            await updateTopic(topic.id, formData)
             onSuccess?.()
             setOpen(false)
           }}

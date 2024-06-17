@@ -37,7 +37,7 @@ export const topics = sqliteTable('topic', {
   builtin_topic_name: text('builtin_topic_name').unique(),
   topic_desc: text('topic_desc'),
   pin: integer('pin', { mode: 'boolean' }).notNull().default(false),
-  group_name: text('group_name').notNull().default('default'),
+  group_name: text('group_name'),
   group_config: text('group_config', { mode: 'json' }).$type<ThreadGroupConfig>().default({}),
   created_at: integer('created_at', {
     mode: 'timestamp',

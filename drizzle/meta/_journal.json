@@ -8,6 +8,34 @@
       "when": 1718539747548,
       "tag": "0000_stormy_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1718594598821,
+      "tag": "0001_plain_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1718594711234,
+      "tag": "0002_absent_hellfire_club",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1718594750257,
+      "tag": "0003_unusual_sersi",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1718594775333,
+      "tag": "0004_wandering_ulik",
+      "breakpoints": true
     }
   ]
 }

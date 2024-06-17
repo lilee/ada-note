@@ -17,7 +17,6 @@ export const ThreadFormCreate = ({
   const formRef = useRef<HTMLFormElement>(null)
   const [pending, startTransition] = useTransition()
   useEffect(() => {
-    console.log('setDefaultValue', defaultValue)
     setDefaultValue(defaultValue ?? '')
   })
 

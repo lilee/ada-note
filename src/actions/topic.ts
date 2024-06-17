@@ -33,11 +33,11 @@ export const createTopic = async (formData: FormData) => {
     topic_content: text(),
   }).parse(formData)
 
-  const [topic_name, ...topic_desc_parts] = form.topic_content.split('\n')
-  const topic_desc = topic_desc_parts.join('\n')
+  const [topic_name, group_name = 'default'] = form.topic_content.split('/')
+
   const values: TopicCreate = {
-    topic_name,
-    topic_desc,
+    topic_name: topic_name.trim(),
+    group_name: group_name.trim(),
     user_id: user.userId,
   }
   const topic = await db().insert(schema.topics).values(values).returning()
@@ -57,10 +57,9 @@ export const updateTopic = async (topicId: string, formData: FormData) => {
     values.pin = form.pin === 'on'
   }
   if (form.topic_content) {
-    const [topic_name, ...topic_desc_parts] = form.topic_content.split('\n')
-    const topic_desc = topic_desc_parts.join('\n')
+    const [topic_name, group_name] = form.topic_content.split('/')
     values.topic_name = topic_name
-    values.topic_desc = topic_desc
+    values.group_name = group_name
   }
   if (form.group_config) {
     values.group_config = form.group_config.reduce((acc, group_seq) => {
