@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `reflect_prompts` text DEFAULT '{}';

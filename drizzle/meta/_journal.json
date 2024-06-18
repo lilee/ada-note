@@ -36,6 +36,20 @@
       "when": 1718594775333,
       "tag": "0004_wandering_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1718701691113,
+      "tag": "0005_faulty_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1718715069132,
+      "tag": "0006_stale_wiccan",
+      "breakpoints": true
     }
   ]
 }

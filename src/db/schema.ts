@@ -13,6 +13,9 @@ export const users = sqliteTable('user', {
   nickname: text('nickname'),
   password: text('password').notNull(),
   role: text('role').$type<'admin' | 'user'>().default('user').notNull(),
+  reflect_prompts: text('reflect_prompts', { mode: 'json' })
+    .$type<Record<string, string>>()
+    .default({}),
   created_at: integer('created_at', {
     mode: 'timestamp',
   })
@@ -61,6 +64,7 @@ export const threads = sqliteTable('thread', {
     .references(() => topics.id)
     .notNull(),
   thread_content: text('thread_content').notNull(),
+  thread_content_long: text('thread_content_long'),
   group_name: text('group_name'),
   command: text('command'),
   color: text('color', { enum: ['None', 'Highlight', 'Task', 'Idea'] })

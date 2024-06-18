@@ -1,12 +1,15 @@
 'use server'
 
+import { createOpenAI } from '@ai-sdk/openai'
+import { CoreMessage, streamText } from 'ai'
+import { createStreamableValue } from 'ai/rsc'
 import { and, eq } from 'drizzle-orm'
-import { db, schema } from '../db'
-import { mustAuth, parseThreadContent, revalidateTopicGroup } from './util'
-import * as zfd from '~/lib/zod-form-data'
 import { revalidatePath } from 'next/cache'
-import { ThreadData, TopicData } from '../types'
 import { redirect } from 'next/navigation'
+import * as zfd from '~/lib/zod-form-data'
+import { db, schema } from '../db'
+import { ThreadData, ThreadUpdate, TopicData } from '../types'
+import { mustAuth, parseThreadContent, revalidateTopicGroup, splitThreadContent } from './util'
 
 export const updateThread = async (threadId: string, formData: FormData) => {
   const db_ = db()
@@ -23,7 +26,7 @@ export const updateThread = async (threadId: string, formData: FormData) => {
       thread_content: zfd.text(),
     })
     .parse(formData)
-  const updateData: { thread_content: string; group_name?: string } = {
+  const updateData: ThreadUpdate = {
     thread_content: form.thread_content,
   }
   if (!thread.lead_thread_id) {
@@ -31,6 +34,11 @@ export const updateThread = async (threadId: string, formData: FormData) => {
     updateData.thread_content = thread_content
     updateData.group_name = group_name
   }
+  const [thread_content_short, thread_content_long] = splitThreadContent(
+    updateData.thread_content as string
+  )
+  updateData.thread_content = thread_content_short
+  updateData.thread_content_long = thread_content_long
   await db_
     .update(schema.threads)
     .set(updateData)
@@ -79,13 +87,15 @@ export const addFollowThread = async (threadId: string, formData: FormData) => {
     command = await executeCommand(command, leadThread)
   }
 
+  const [thread_content_short, thread_content_long] = splitThreadContent(thread_content)
   await db_
     .insert(schema.threads)
     .values({
       lead_thread_id: leadThread.id,
       topic_id: leadThread.topic_id,
       command,
-      thread_content,
+      thread_content: thread_content_short,
+      thread_content_long,
       user_id: user.userId,
     })
     .returning()
@@ -101,6 +111,77 @@ export const addFollowThread = async (threadId: string, formData: FormData) => {
     }
     redirect(`/topics/${leadThread.topic_id}?${searchParams.toString()}`)
   }
+}
+
+export const reflectThread = async (threadId: string, prompt: string) => {
+  const db_ = db()
+  const session = await mustAuth()
+  const thread = await db_.query.threads.findFirst({
+    with: {
+      follows: true,
+    },
+    where: (table, { and, eq }) => and(eq(table.id, threadId), eq(table.user_id, session.userId)),
+  })
+  if (!thread) {
+    throw new Error('thread not found')
+  }
+
+  const user = await db_.query.users.findFirst({
+    where: (table, { eq }) => eq(table.id, session.userId),
+  })
+
+  const prompt_content = user?.reflect_prompts?.[prompt] ?? prompt
+
+  const messages: CoreMessage[] = []
+  messages.push({
+    role: 'system',
+    content: prompt_content,
+  })
+  messages.push({
+    role: 'user',
+    content: thread.thread_content,
+  })
+  thread.follows.forEach(f => {
+    messages.push({
+      role: 'user',
+      content: f.thread_content,
+    })
+  })
+
+  const openai = createOpenAI({
+    baseURL: process.env.OPENAI_API_BASE,
+  })
+
+  const result = await streamText({
+    model: openai('gpt-4o'),
+    messages,
+    onFinish: async e => {
+      const [thread_content, thread_content_long] = splitThreadContent(e.text)
+      await db_.insert(schema.threads).values({
+        lead_thread_id: thread.id,
+        topic_id: thread.topic_id,
+        command: `/reflect ${prompt}`,
+        thread_content,
+        thread_content_long,
+        user_id: session.userId,
+      })
+    },
+  })
+
+  const stream = createStreamableValue(result.textStream)
+  return stream.value
+}
+
+export const revalidateThread = async (threadId: string) => {
+  const user = await mustAuth()
+  const db_ = db()
+  const thread = await db_.query.threads.findFirst({
+    where: (table, { and, eq }) => and(eq(table.id, threadId), eq(table.user_id, user.userId)),
+  })
+  if (!thread) {
+    throw new Error('thread not found')
+  }
+  await revalidate(thread)
 }
 
 const revalidate = async (thread: ThreadData) => {

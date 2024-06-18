@@ -12,6 +12,7 @@ import { ThreadData } from '~/types'
 import { ThreadFormUpdate } from './thread-form-update'
 import ThreadTime from './thread-time'
 import { TopicGroupButton } from '~/components/topic/topic-group-button'
+import { ThreadContentMarkdown } from './thread-content-md'
 
 export const ThreadFollowItem = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
@@ -41,17 +42,24 @@ export const ThreadFollowItem = ({ thread }: { thread: ThreadData }) => {
         <div className="timeline-header">
           <ThreadTime time={thread.created_at} format="MM/dd HH:mm" />
         </div>
-        {isEditing ? (
-          <ThreadFormUpdate
-            thread={thread}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-            onClose={() => setEditing(false)}
-          />
-        ) : (
-          <pre>{thread.thread_content}</pre>
-        )}
-        {thread.command && <ThreadCommand command={thread.command} />}
+        <div className="flex flex-col gap-2">
+          {thread.command && <ThreadCommand command={thread.command} />}
+          {isEditing ? (
+            <ThreadFormUpdate
+              thread={thread}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+              onClose={() => setEditing(false)}
+            />
+          ) : (
+            <>
+              <pre>{thread.thread_content}</pre>
+              {thread.thread_content_long && (
+                <ThreadContentMarkdown content={thread.thread_content_long} />
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -70,12 +78,12 @@ const ThreadDot = ({ onTodoChange }: { onTodoChange?: (status: 'done' | 'doing')
   )
 }
 
-const ThreadCommand = ({ command }: { command: string }) => {
+export const ThreadCommand = ({ command }: { command: string }) => {
   const [cmd, ...args] = command.split(' ')
   if (cmd == '/group') {
     const [toGroup, fromGroup] = args
     return (
-      <div className="mt-2 flex gap-2 items-center">
+      <div className="flex gap-2 items-center">
         <div className="h-5 px-2 text-xs rounded-full bg-blue-50 border border-blue-400 text-blue-500">
           change group
         </div>
@@ -85,6 +93,16 @@ const ThreadCommand = ({ command }: { command: string }) => {
           </>
         )}
         <TopicGroupButton group={{ group_name: toGroup }} />
+      </div>
+    )
+  }
+  if (cmd == '/reflect') {
+    return (
+      <div className="flex gap-2 items-center">
+        <div className="h-5 px-2 text-xs rounded-full bg-blue-50 border border-blue-400 text-blue-500">
+          reflect
+        </div>
+        <div className="text-xs text-gray-500">{args.join(' ')}</div>
       </div>
     )
   }

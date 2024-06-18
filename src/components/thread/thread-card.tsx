@@ -1,18 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import type { ThreadData } from '~/types'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { ThreadCardReply } from './thread-card-reply'
-import { ThreadFormUpdate } from './thread-form-update'
-import { parseThreadContent } from './util'
-import { ThreadFollowItem } from './thread-follow-item'
 import { deleteThread, updateThread } from '~/actions/thread'
-import ThreadTime from './thread-time'
 import { TopicGroupButton } from '~/components/topic/topic-group-button'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import type { ThreadData } from '~/types'
+import { ThreadCardReply } from './thread-card-reply'
+import { ThreadFollowItem } from './thread-follow-item'
+import { ThreadFormUpdate } from './thread-form-update'
+import ThreadTime from './thread-time'
+import { parseThreadContent } from './util'
 
 export const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
+  const [flyingThread, setFlyingThread] = useState<ThreadData | null>(null)
   const { thread_title, thread_content } = parseThreadContent(thread.thread_content)
 
   const handleUpdate = async (formData: FormData) => {
@@ -60,10 +61,11 @@ export const ThreadCard = ({ thread }: { thread: ThreadData }) => {
           {thread.follows?.map(thread => (
             <ThreadFollowItem key={thread.id} thread={thread} />
           ))}
+          {flyingThread && <ThreadFollowItem thread={flyingThread} />}
           <div className="timeline-item pb-0">
             <div className="timeline-dot"></div>
             <div className="timeline-content">
-              <ThreadCardReply thread_id={thread.id} />
+              <ThreadCardReply lead={thread} onFlying={setFlyingThread} />
             </div>
           </div>
         </div>

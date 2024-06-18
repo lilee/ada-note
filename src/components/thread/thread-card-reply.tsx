@@ -1,23 +1,54 @@
+import { readStreamableValue } from 'ai/rsc'
 import { useState } from 'react'
-import { addFollowThread } from '~/actions/thread'
+import { addFollowThread, reflectThread, revalidateThread } from '~/actions/thread'
+import { ThreadData } from '~/types'
 import { ThreadFormCreate } from './thread-form-create'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
-export const ThreadCardReply = ({ thread_id }: { thread_id: string }) => {
-  const router = useRouter()
-  const searchParams = new URLSearchParams(useSearchParams())
+export const ThreadCardReply = ({
+  lead,
+  onFlying,
+}: {
+  lead: ThreadData
+  onFlying?: (thread: ThreadData | null) => void
+}) => {
   const [isReplying, setReplying] = useState(false)
-  const handleReply = async (formData: FormData) => {
-    await addFollowThread(thread_id, formData)
-    /*
-    if (leadThread.group_name) {
-      searchParams.set('group', leadThread.group_name)
-    } else {
-      searchParams.delete('group')
+  const handleReflect = async (prompt: string) => {
+    const makeFlyingThead = (thread_content: string) => {
+      const flyingThead: ThreadData = {
+        id: 'flying',
+        lead_thread_id: lead.id,
+        topic_id: lead.topic_id,
+        color: 'None',
+        task_done_at: null,
+        group_name: null,
+        thread_content,
+        thread_content_long: null,
+        command: `/reflect ${prompt}`,
+        created_at: new Date(),
+        updated_at: new Date(),
+        user_id: lead.user_id,
+      }
+      return flyingThead
     }
-    router.push(`/topics/${leadThread.topic_id}?${searchParams.toString()}`)
-    */
-    setReplying(false)
+    onFlying?.(makeFlyingThead('Wait reflecting...'))
+    const result = await reflectThread(lead.id, prompt)
+    for await (const content of readStreamableValue(result)) {
+      onFlying?.(makeFlyingThead(content ?? 'Wait reflecting...'))
+    }
+    await revalidateThread(lead.id)
+    onFlying?.(null)
+  }
+
+  const handleReply = async (formData: FormData) => {
+    const thread_content = formData.get('thread_content') as string
+    if (thread_content.startsWith('/reflect ')) {
+      const prompt = thread_content.substring('/reflect '.length)
+      handleReflect(prompt).then(() => setReplying(false))
+    } else {
+      await addFollowThread(lead.id, formData)
+      setReplying(false)
+    }
   }
   if (isReplying) {
     return <ThreadFormCreate onSubmit={handleReply} onCancel={() => setReplying(false)} />

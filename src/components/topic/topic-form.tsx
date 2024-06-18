@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useTransition } from 'react'
-import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { TopicData } from '~/types'
 

@@ -5,6 +5,8 @@ type ThreadSelect = typeof threads.$inferSelect
 type TopicSelect = typeof topics.$inferSelect
 
 export type ThreadData = ThreadSelect & { follows?: ThreadSelect[] }
+export type ThreadUpdate = SQLiteUpdateSetSource<typeof threads>
+
 export type TopicData = TopicSelect
 export type TopicCreate = typeof topics.$inferInsert
 export type TopicUpdate = SQLiteUpdateSetSource<typeof topics>

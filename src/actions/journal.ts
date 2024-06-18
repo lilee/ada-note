@@ -1,7 +1,7 @@
 'use server'
 
 import { db, schema } from '~/db'
-import { mustAuth } from './util'
+import { mustAuth, splitThreadContent } from './util'
 import * as zfd from '~/lib/zod-form-data'
 import { revalidatePath } from 'next/cache'
 
@@ -60,9 +60,11 @@ export const createJournalThread = async (date: string, formData: FormData) => {
       thread_content: zfd.text(),
     })
     .parse(formData)
+  const [thread_content, thread_content_long] = splitThreadContent(form.thread_content)
   const thread = await db_.insert(schema.threads).values({
     topic_id: topic.id,
-    thread_content: form.thread_content,
+    thread_content,
+    thread_content_long,
     user_id: user.userId,
   })
   revalidatePath(`/journal/${date}`)

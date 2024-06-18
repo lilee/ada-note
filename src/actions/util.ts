@@ -49,6 +49,7 @@ export const parseThreadContent = (
   group_name?: string
   command?: string
   thread_content: string
+  thread_content_long?: string
 } => {
   const [firstLine, restContent = ''] = splitN(text, '\n', 1)
   let thread_content = text
@@ -66,6 +67,14 @@ export const parseThreadContent = (
     }
     return { command, thread_content }
   }
+}
+
+export const splitThreadContent = (text: string) => {
+  const threshold = 140
+  if (text.length < threshold) {
+    return [text]
+  }
+  return [text.substring(0, threshold), text]
 }
 
 const extractGroupName = (input: string) => {

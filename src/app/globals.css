@@ -163,7 +163,7 @@
     @apply flex gap-1 text-xs font-normal leading-none text-gray-400 dark:text-gray-500;
   }
   .timeline-content {
-    @apply leading-none flex flex-col gap-1;
+    @apply leading-none flex flex-col gap-2;
   }
   .timeline pre {
     @apply w-full text-sm font-normal text-gray-600 dark:text-gray-400 font-sans leading-5 break-all text-wrap whitespace-pre-wrap;

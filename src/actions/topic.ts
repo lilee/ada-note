@@ -1,7 +1,7 @@
 'use server'
 
 import { db, schema } from '~/db'
-import { mustAuth, parseThreadContent, revalidateTopicGroup } from './util'
+import { mustAuth, parseThreadContent, revalidateTopicGroup, splitThreadContent } from './util'
 import { ThreadGroup, TopicCreate, TopicData, TopicUpdate } from '../types'
 import { formData as zFormData, text, repeatableOfType } from '../lib/zod-form-data'
 import { z } from 'zod'
@@ -99,12 +99,14 @@ export const createTopicThread = async (topicId: string, formData: FormData) => 
     if (!thread_content) {
       throw new Error('thread content is required')
     }
+    const [thread_content_short, thread_content_long] = splitThreadContent(thread_content)
     await db()
       .insert(schema.threads)
       .values({
         topic_id: topicId,
         group_name,
-        thread_content: thread_content,
+        thread_content: thread_content_short,
+        thread_content_long,
         user_id: user.userId,
       })
       .returning()

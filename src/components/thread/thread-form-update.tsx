@@ -28,7 +28,6 @@ export const ThreadFormUpdate = ({
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     startTransition(async () => {
-      console.log('contentState', contentState)
       if (!contentState) {
         await onDelete?.()
       } else {
@@ -62,9 +61,27 @@ export const ThreadFormUpdate = ({
         >
           Cancel
         </Button>
-        <Button type="submit" className="rounded-full" variant="default" size="sm">
-          {!contentState ? 'Delete' : 'Update'}
-        </Button>
+        {contentState ? (
+          <Button
+            type="submit"
+            className="rounded-full"
+            variant="default"
+            size="sm"
+            disabled={pending}
+          >
+            Update
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            className="rounded-full"
+            variant="destructive"
+            size="sm"
+            disabled={pending}
+          >
+            Delete
+          </Button>
+        )}
       </div>
     </form>
   )

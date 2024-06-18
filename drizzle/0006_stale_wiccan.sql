@@ -1,0 +1,1 @@
+ALTER TABLE `thread` ADD `thread_content_long` text;

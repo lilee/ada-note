@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createTopic, getTopics, updateTopic } from '~/actions/topic'
 import { TopicForm } from '~/components/topic/topic-form'
@@ -75,6 +75,8 @@ export const MainMenuFooter = () => {
 }
 
 export const UserMenu = () => {
+  const router = useRouter()
+  const goto = (path: string) => router.push(path)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -86,8 +88,7 @@ export const UserMenu = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Settings</DropdownMenuItem>
-        <DropdownMenuItem>Support</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => goto('/settings')}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
