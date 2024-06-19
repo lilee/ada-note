@@ -16,7 +16,7 @@ export const ThreadFormUpdate = ({
   onDelete?: () => Promise<void>
   onClose?: () => void
 }) => {
-  let content = thread.thread_content
+  let content = thread.thread_content_long ?? thread.thread_content
   if (thread.group_name) {
     content = `#${thread.group_name}#\n${content}`
   }
