@@ -10,6 +10,7 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "pages:preview": "pnpm pages:build && wrangler pages dev",
     "pages:deploy": "pnpm pages:build && wrangler pages deploy",
+    "pages:deploy-only": "wrangler pages deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:up": "drizzle-kit up",

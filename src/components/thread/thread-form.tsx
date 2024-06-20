@@ -10,6 +10,10 @@ import { ThreadRefer } from './thread-refer'
 
 type ReferThreadsAction =
   | {
+      type: 'init'
+      threadIds?: string[]
+    }
+  | {
       type: 'add' | 'remove'
       threadId: string
     }
@@ -30,9 +34,17 @@ export const ThreadForm = ({
   const { toast } = useToast()
   const [threadContent, setThreadContent] = useState('')
   const [referThreads, dispatch] = useReducer((state: string[], action: ReferThreadsAction) => {
-    if (action.type === 'add') {
-      if (!state.includes(action.threadId)) {
-        state = [...state, action.threadId]
+    if (action.type === 'init') {
+      state = action.threadIds ?? []
+    } else if (action.type === 'add') {
+      if (state.includes(action.threadId)) {
+        toast({ description: `Thread has been referenced.` })
+      } else {
+        if (state.length >= 3) {
+          toast({ description: 'Up to three references are supported' })
+        } else {
+          state = [...state, action.threadId]
+        }
       }
     } else if (action.type === 'remove') {
       state = state.filter(threadId => threadId !== action.threadId)
@@ -51,7 +63,7 @@ export const ThreadForm = ({
         content = `[${thread.group_name}]\n${content}`
       }
       setThreadContent(content)
-      thread.refers?.forEach(r => dispatch({ type: 'add', threadId: r.refer_thread_id }))
+      dispatch({ type: 'init', threadIds: thread.refers?.map(x => x.refer_thread_id) })
     } else {
       setThreadContent(defaultValue ?? '')
     }
