@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { auth } from '~/auth'
 import { db, schema } from '~/db'
 import { TopicData } from '../types'
@@ -49,17 +49,15 @@ export const parseThreadContent = (
   group_name?: string
   command?: string
   thread_content: string
-  thread_content_long?: string
 } => {
   const [firstLine, restContent = ''] = splitN(text, '\n', 1)
   let thread_content = text
   if (mode === 'lead') {
     const group_name = extractGroupName(firstLine)
-    const command = extractCommand(firstLine)
-    if (group_name || command) {
+    if (group_name) {
       thread_content = restContent.trim()
     }
-    return { command, group_name, thread_content }
+    return { group_name, thread_content }
   } else {
     const command = extractCommand(firstLine)
     if (command) {
@@ -69,10 +67,10 @@ export const parseThreadContent = (
   }
 }
 
-export const splitThreadContent = (text: string) => {
-  const threshold = 140
+export const splitThreadContent = (text: string): [string, string | null] => {
+  const threshold = 280
   if (text.length < threshold) {
-    return [text]
+    return [text, null]
   }
   return [text.substring(0, threshold), text]
 }
@@ -101,7 +99,7 @@ const extractCommand = (input: string) => {
   return input
 }
 
-const COMMAND_DEFINE = new Set(['/reflect', '/group', '/color'])
+const COMMAND_DEFINE = new Set(['/reflect', '/group', '/color', '/archive', '/pin'])
 
 export const revalidateTopicGroup = async (topic_: TopicData | string) => {
   let topic: TopicData | undefined
@@ -140,7 +138,7 @@ export const getTopicGroups = async (topicId: string) => {
       group_name: schema.threads.group_name,
     })
     .from(schema.threads)
-    .where(eq(schema.threads.topic_id, topicId))
+    .where(and(eq(schema.threads.topic_id, topicId), eq(schema.threads.is_archived, false)))
     .orderBy(asc(schema.threads.group_name))
   const groups = result.filter(r => r.group_name).map(r => r.group_name!.split('/')[0])
   return groups

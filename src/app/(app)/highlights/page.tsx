@@ -4,6 +4,6 @@ import { ThreadCardList } from '~/components/thread'
 export const runtime = 'edge'
 
 export default async function Page() {
-  const threads = await getColorThreads('task')
+  const threads = await getColorThreads('highlight')
   return <ThreadCardList threads={threads} />
 }

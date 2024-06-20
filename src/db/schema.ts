@@ -1,6 +1,6 @@
 import { init } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
-import { AnySQLiteColumn, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { AnySQLiteColumn, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 const createId = init({ length: 10 })
 
@@ -66,13 +66,15 @@ export const threads = sqliteTable('thread', {
   thread_content: text('thread_content').notNull(),
   thread_content_long: text('thread_content_long'),
   group_name: text('group_name'),
+  pin_on_group: integer('pin_on_group').notNull().default(0),
   command: text('command'),
-  color: text('color', { enum: ['None', 'Highlight', 'Task', 'Idea'] })
+  color: text('color', { enum: ['none', 'highlight', 'task', 'task-done'] })
     .notNull()
-    .default('None'),
+    .default('none'),
   task_done_at: integer('task_done_at', {
     mode: 'timestamp',
   }),
+  is_archived: integer('is_archived', { mode: 'boolean' }).notNull().default(false),
   created_at: integer('created_at', {
     mode: 'timestamp',
   })
@@ -85,6 +87,31 @@ export const threads = sqliteTable('thread', {
     .notNull(),
   user_id: text('user_id').references(() => users.id),
 })
+
+export const threadRefers = sqliteTable(
+  'thread_refer',
+  {
+    thread_id: text('thread_id')
+      .references(() => threads.id, {
+        onDelete: 'cascade',
+      })
+      .notNull(),
+    lead_thread_id: text('lead_thread_id')
+      .references(() => threads.id, {
+        onDelete: 'cascade',
+      })
+      .notNull(),
+    refer_thread_id: text('refer_thread_id')
+      .references(() => threads.id, {
+        onDelete: 'cascade',
+      })
+      .notNull(),
+    user_id: text('user_id').references(() => users.id),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.thread_id, table.refer_thread_id] }),
+  })
+)
 
 export const userRelations = relations(users, ({ many }) => ({
   topics: many(topics),
@@ -115,5 +142,24 @@ export const threadRelations = relations(threads, ({ one, many }) => ({
   }),
   follows: many(threads, {
     relationName: 'follows',
+  }),
+  refers: many(threadRefers, {
+    relationName: 'refer',
+  }),
+  reverts: many(threadRefers, {
+    relationName: 'revert',
+  }),
+}))
+
+export const threadReferRelations = relations(threadRefers, ({ one }) => ({
+  refer: one(threads, {
+    fields: [threadRefers.thread_id],
+    references: [threads.id],
+    relationName: 'refer',
+  }),
+  revert: one(threads, {
+    fields: [threadRefers.refer_thread_id],
+    references: [threads.id],
+    relationName: 'revert',
   }),
 }))

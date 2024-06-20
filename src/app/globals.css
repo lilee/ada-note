@@ -125,25 +125,24 @@
     @apply stack gap-6;
   }
 
-  .thread-dot {
-    @apply w-4 h-4 rounded-full;
+  .thread-color {
+    @apply h-5 flex items-center px-2 text-xs font-medium;
   }
 
-  .thread-dot[data-color='None'],
-  .timeline-dot[data-color='None'] {
-    @apply bg-gray-200;
+  .thread-color[data-color='none'] {
+    @apply bg-gray-200 text-gray-700;
   }
-  .thread-dot[data-color='Highlight'],
-  .timeline-dot[data-color='Highlight'] {
-    @apply bg-orange-500;
+  .thread-color[data-color='highlight'] {
+    @apply bg-orange-200 text-orange-700;
   }
-  .thread-dot[data-color='Todo'],
-  .timeline-dot[data-color='Todo'] {
-    @apply bg-green-500;
+  .thread-color[data-color='task'] {
+    @apply bg-green-200 text-green-700;
   }
-  .thread-dot[data-color='Idea'],
-  .timeline-dot[data-color='Idea'] {
-    @apply bg-blue-500;
+  .thread-color[data-color='task-done'] {
+    @apply bg-green-200 text-green-700;
+  }
+  .thread-color[data-color='task-overdue'] {
+    @apply bg-red-50 text-red-400;
   }
 
   .timeline {
@@ -152,20 +151,17 @@
   .timeline-item {
     @apply relative pb-6 ps-4 border-s border-gray-200;
   }
-  .timeline-add {
-    @apply relative ps-4 border-gray-200 leading-none;
-  }
 
   .timeline-dot {
     @apply absolute w-4 h-4 flex items-center justify-center bg-gray-200 rounded-full -start-2 border border-white dark:border-gray-900 dark:bg-gray-700;
   }
   .timeline-header {
-    @apply flex gap-1 text-xs font-normal leading-none text-gray-400 dark:text-gray-500;
+    @apply flex gap-1 items-center text-xs font-normal leading-none text-gray-400 dark:text-gray-500;
   }
   .timeline-content {
     @apply leading-none flex flex-col gap-2;
   }
   .timeline pre {
-    @apply w-full text-sm font-normal text-gray-600 dark:text-gray-400 font-sans leading-5 break-all text-wrap whitespace-pre-wrap;
+    @apply w-full text-sm font-normal text-gray-700 dark:text-gray-400 font-sans leading-6 break-all text-wrap whitespace-pre-wrap;
   }
 }

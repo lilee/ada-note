@@ -1,1 +1,0 @@
-ALTER TABLE `topic` DROP COLUMN `group_name`;

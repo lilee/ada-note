@@ -6,10 +6,30 @@ import { createStreamableValue } from 'ai/rsc'
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import * as zfd from '~/lib/zod-form-data'
 import { db, schema } from '../db'
-import { ThreadData, ThreadUpdate, TopicData } from '../types'
+import { ThreadColor, ThreadData, ThreadUpdate, TopicData } from '../types'
 import { mustAuth, parseThreadContent, revalidateTopicGroup, splitThreadContent } from './util'
+import { createThread, threadFormSchema, updateThread as updateThread_ } from './_base'
+
+export const getThread = async (threadId: string) => {
+  const db_ = db()
+  const user = await mustAuth()
+  const thread = await db_.query.threads.findFirst({
+    with: {
+      topic: true,
+      follows: {
+        limit: 30,
+        with: {
+          refers: true,
+        },
+      },
+      refers: true,
+      reverts: true,
+    },
+    where: (table, { and, eq }) => and(eq(table.id, threadId), eq(table.user_id, user.userId)),
+  })
+  return thread
+}
 
 export const updateThread = async (threadId: string, formData: FormData) => {
   const db_ = db()
@@ -21,30 +41,20 @@ export const updateThread = async (threadId: string, formData: FormData) => {
     throw new Error('thread not found')
   }
 
-  const form = zfd
-    .formData({
-      thread_content: zfd.text(),
-    })
-    .parse(formData)
-  const updateData: ThreadUpdate = {
-    thread_content: form.thread_content,
-  }
+  const form = threadFormSchema.parse(formData)
+  let thread_content = form.thread_content
+  let group_name: string | undefined = undefined
   if (!thread.lead_thread_id) {
-    const { thread_content, group_name } = parseThreadContent(form.thread_content, 'lead')
-    updateData.thread_content = thread_content
-    updateData.group_name = group_name
+    const x = parseThreadContent(form.thread_content, 'lead')
+    thread_content = x.thread_content
+    group_name = x.group_name
   }
-  const [thread_content_short, thread_content_long] = splitThreadContent(
-    updateData.thread_content as string
-  )
-  updateData.thread_content = thread_content_short
-  updateData.thread_content_long = thread_content_long
-  await db_
-    .update(schema.threads)
-    .set(updateData)
-    .where(and(eq(schema.threads.id, threadId), eq(schema.threads.user_id, user.userId)))
-
-  revalidateTopicGroup(thread.topic_id)
+  await updateThread_(user.userId, threadId, {
+    thread_content,
+    group_name,
+    refer_thread_ids: form.refer_thread_ids,
+  })
+  await revalidateTopicGroup(thread.topic_id)
   await revalidate(thread)
 }
 
@@ -65,16 +75,9 @@ export const deleteThread = async (threadId: string) => {
 export const addFollowThread = async (threadId: string, formData: FormData) => {
   const db_ = db()
   const user = await mustAuth()
-  const form = zfd
-    .formData({
-      thread_content: zfd.text(),
-    })
-    .parse(formData)
-
+  const form = threadFormSchema.parse(formData)
   const leadThread = await db_.query.threads.findFirst({
-    with: {
-      topic: true,
-    },
+    with: { topic: true },
     where: (table, { and, eq }) => and(eq(table.id, threadId), eq(table.user_id, user.userId)),
   })
   if (!leadThread) {
@@ -87,21 +90,15 @@ export const addFollowThread = async (threadId: string, formData: FormData) => {
     command = await executeCommand(command, leadThread)
   }
 
-  const [thread_content_short, thread_content_long] = splitThreadContent(thread_content)
-  await db_
-    .insert(schema.threads)
-    .values({
-      lead_thread_id: leadThread.id,
-      topic_id: leadThread.topic_id,
-      command,
-      thread_content: thread_content_short,
-      thread_content_long,
-      user_id: user.userId,
-    })
-    .returning()
+  await createThread(user.userId, {
+    topic_id: leadThread.topic_id,
+    lead_thread_id: leadThread.id,
+    command,
+    thread_content,
+    refer_thread_ids: form.refer_thread_ids,
+  })
 
   await revalidate(leadThread)
-
   if (leadThread.group_name !== old_group_name) {
     const searchParams = new URLSearchParams()
     if (leadThread.group_name) {
@@ -156,14 +153,11 @@ export const reflectThread = async (threadId: string, prompt: string) => {
     model: openai('gpt-4o'),
     messages,
     onFinish: async e => {
-      const [thread_content, thread_content_long] = splitThreadContent(e.text)
-      await db_.insert(schema.threads).values({
-        lead_thread_id: thread.id,
+      await createThread(session.userId, {
         topic_id: thread.topic_id,
+        lead_thread_id: thread.id,
         command: `/reflect ${prompt}`,
-        thread_content,
-        thread_content_long,
-        user_id: session.userId,
+        thread_content: e.text,
       })
     },
   })
@@ -203,7 +197,7 @@ const revalidate = async (thread: ThreadData) => {
 
 const executeCommand = async (command: string, thread: ThreadData & { topic: TopicData }) => {
   const [cmd, ...args] = command.split(' ')
-  const updateValues: Record<string, any> = {}
+  const updateValues: ThreadUpdate = {}
 
   switch (cmd) {
     case '/group':
@@ -222,6 +216,31 @@ const executeCommand = async (command: string, thread: ThreadData & { topic: Top
       }
       thread.group_name = group_name
       updateValues.group_name = group_name
+      break
+    case '/color':
+      const [color] = args
+      if (color === thread.color) {
+        throw new Error('color not change')
+      }
+      args.push(thread.color)
+      thread.color = color as ThreadColor
+      updateValues.color = thread.color
+      break
+    case '/pin':
+      const [value = 1] = args
+      const pinValue = Number(value)
+      if (isNaN(pinValue)) {
+        throw new Error('pin value is not a number')
+      }
+      thread.pin_on_group = pinValue
+      updateValues.pin_on_group = pinValue
+      break
+    case '/archive':
+      if (thread.is_archived) {
+        throw new Error('thread already archived')
+      }
+      thread.is_archived = true
+      updateValues.is_archived = true
       break
     default:
       throw new Error('command not implemented')

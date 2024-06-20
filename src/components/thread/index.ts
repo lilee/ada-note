@@ -1,2 +1,2 @@
 export { ThreadCardList } from './thread-card-list'
-export { ThreadFormCreate } from './thread-form-create'
+export { ThreadForm } from './thread-form'

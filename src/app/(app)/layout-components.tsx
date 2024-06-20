@@ -8,6 +8,7 @@ import {
   BookType as TopicIcon,
   Plus,
   ListTodo as TaskIcon,
+  Highlighter as HighlightIcon,
   UserRoundCog as UserIcon,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
@@ -35,6 +36,7 @@ import { cn } from '../../lib/utils'
 const mainMenuItems = [
   { href: '/journal', label: 'Journal', Icon: JournalIcon },
   { href: '/tasks', label: 'Tasks', Icon: TaskIcon },
+  { href: '/highlights', label: 'Highlights', Icon: HighlightIcon },
   { href: '/ask', label: 'Ask', Icon: AskIcon },
 ]
 export const MainMenu = () => {
@@ -99,7 +101,7 @@ export const UserMenu = () => {
 export const TopicsMenu = () => {
   const [group, setGroup] = useState('All')
   const { data: topics, refetch } = useFetchAction(getTopics, {
-    refreshKey: 'topics',
+    cacheKey: 'topics',
   })
   const groupSet = new Set<string>(topics?.map(t => t.group_name?.trim()!).filter(Boolean))
   const groups = Array.from(groupSet)

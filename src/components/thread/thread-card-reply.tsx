@@ -2,8 +2,7 @@ import { readStreamableValue } from 'ai/rsc'
 import { useState } from 'react'
 import { addFollowThread, reflectThread, revalidateThread } from '~/actions/thread'
 import { ThreadData } from '~/types'
-import { ThreadFormCreate } from './thread-form-create'
-import { revalidatePath } from 'next/cache'
+import { ThreadForm } from './thread-form'
 
 export const ThreadCardReply = ({
   lead,
@@ -19,9 +18,11 @@ export const ThreadCardReply = ({
         id: 'flying',
         lead_thread_id: lead.id,
         topic_id: lead.topic_id,
-        color: 'None',
+        color: 'none',
+        is_archived: false,
         task_done_at: null,
         group_name: null,
+        pin_on_group: 0,
         thread_content,
         thread_content_long: null,
         command: `/reflect ${prompt}`,
@@ -40,7 +41,7 @@ export const ThreadCardReply = ({
     onFlying?.(null)
   }
 
-  const handleReply = async (formData: FormData) => {
+  const handleReply = async (action: string, formData: FormData) => {
     const thread_content = formData.get('thread_content') as string
     if (thread_content.startsWith('/reflect ')) {
       const prompt = thread_content.substring('/reflect '.length)
@@ -51,7 +52,7 @@ export const ThreadCardReply = ({
     }
   }
   if (isReplying) {
-    return <ThreadFormCreate onSubmit={handleReply} onCancel={() => setReplying(false)} />
+    return <ThreadForm onSubmit={handleReply} onCancel={() => setReplying(false)} />
   }
   return (
     <div

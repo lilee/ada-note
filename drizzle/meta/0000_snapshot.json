@@ -1,9 +1,107 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "07dd21ba-bcf9-4a0e-9f93-3b99eb87c1b5",
+  "id": "20e90632-27b8-4d4c-b278-2b7d6f1753a2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "thread_refer": {
+      "name": "thread_refer",
+      "columns": {
+        "thread_id": {
+          "name": "thread_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lead_thread_id": {
+          "name": "lead_thread_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "refer_thread_id": {
+          "name": "refer_thread_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "thread_refer_thread_id_thread_id_fk": {
+          "name": "thread_refer_thread_id_thread_id_fk",
+          "tableFrom": "thread_refer",
+          "tableTo": "thread",
+          "columnsFrom": [
+            "thread_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "thread_refer_lead_thread_id_thread_id_fk": {
+          "name": "thread_refer_lead_thread_id_thread_id_fk",
+          "tableFrom": "thread_refer",
+          "tableTo": "thread",
+          "columnsFrom": [
+            "lead_thread_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "thread_refer_refer_thread_id_thread_id_fk": {
+          "name": "thread_refer_refer_thread_id_thread_id_fk",
+          "tableFrom": "thread_refer",
+          "tableTo": "thread",
+          "columnsFrom": [
+            "refer_thread_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "thread_refer_user_id_user_id_fk": {
+          "name": "thread_refer_user_id_user_id_fk",
+          "tableFrom": "thread_refer",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "thread_refer_thread_id_refer_thread_id_pk": {
+          "columns": [
+            "refer_thread_id",
+            "thread_id"
+          ],
+          "name": "thread_refer_thread_id_refer_thread_id_pk"
+        }
+      },
+      "uniqueConstraints": {}
+    },
     "thread": {
       "name": "thread",
       "columns": {
@@ -35,12 +133,27 @@
           "notNull": true,
           "autoincrement": false
         },
+        "thread_content_long": {
+          "name": "thread_content_long",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "group_name": {
           "name": "group_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "pin_on_group": {
+          "name": "pin_on_group",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "command": {
           "name": "command",
@@ -55,7 +168,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'None'"
+          "default": "'none'"
         },
         "task_done_at": {
           "name": "task_done_at",
@@ -63,6 +176,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -174,9 +295,8 @@
           "name": "group_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'default'"
+          "notNull": false,
+          "autoincrement": false
         },
         "group_config": {
           "name": "group_config",
@@ -280,6 +400,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'user'"
+        },
+        "reflect_prompts": {
+          "name": "reflect_prompts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'{}'"
         },
         "created_at": {
           "name": "created_at",

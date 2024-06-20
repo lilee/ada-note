@@ -1,6 +1,7 @@
 import { Notebook } from 'lucide-react'
 import Link from 'next/link'
 import { MainMenu, MainMenuFooter, TopicsMenu, UserMenu } from './layout-components'
+import { Toaster } from '~/components/ui/toaster'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,6 +27,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         <div className="h-8"></div>
       </div>
       <MainMenuFooter />
+      <Toaster />
     </div>
   )
 }

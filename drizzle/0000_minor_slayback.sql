@@ -1,12 +1,27 @@
+CREATE TABLE `thread_refer` (
+	`thread_id` text NOT NULL,
+	`lead_thread_id` text NOT NULL,
+	`refer_thread_id` text NOT NULL,
+	`user_id` text,
+	PRIMARY KEY(`refer_thread_id`, `thread_id`),
+	FOREIGN KEY (`thread_id`) REFERENCES `thread`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`lead_thread_id`) REFERENCES `thread`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`refer_thread_id`) REFERENCES `thread`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `thread` (
 	`id` text PRIMARY KEY NOT NULL,
 	`lead_thread_id` text,
 	`topic_id` text NOT NULL,
 	`thread_content` text NOT NULL,
+	`thread_content_long` text,
 	`group_name` text,
+	`pin_on_group` integer DEFAULT 0 NOT NULL,
 	`command` text,
-	`color` text DEFAULT 'None' NOT NULL,
+	`color` text DEFAULT 'none' NOT NULL,
 	`task_done_at` integer,
+	`is_archived` integer DEFAULT false NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
 	`user_id` text,
@@ -21,7 +36,7 @@ CREATE TABLE `topic` (
 	`builtin_topic_name` text,
 	`topic_desc` text,
 	`pin` integer DEFAULT false NOT NULL,
-	`group_name` text DEFAULT 'default' NOT NULL,
+	`group_name` text,
 	`group_config` text DEFAULT '{}',
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
@@ -36,6 +51,7 @@ CREATE TABLE `user` (
 	`nickname` text,
 	`password` text NOT NULL,
 	`role` text DEFAULT 'user' NOT NULL,
+	`reflect_prompts` text DEFAULT '{}',
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL
 );

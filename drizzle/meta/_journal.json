@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1718539747548,
-      "tag": "0000_stormy_speedball",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1718594598821,
-      "tag": "0001_plain_dragon_lord",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1718594711234,
-      "tag": "0002_absent_hellfire_club",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1718594750257,
-      "tag": "0003_unusual_sersi",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1718594775333,
-      "tag": "0004_wandering_ulik",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1718701691113,
-      "tag": "0005_faulty_wild_pack",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1718715069132,
-      "tag": "0006_stale_wiccan",
+      "when": 1718855600267,
+      "tag": "0000_minor_slayback",
       "breakpoints": true
     }
   ]

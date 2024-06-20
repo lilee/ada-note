@@ -1,12 +1,13 @@
 'use server'
 
 import { db, schema } from '~/db'
-import { mustAuth, parseThreadContent, revalidateTopicGroup, splitThreadContent } from './util'
+import { mustAuth, parseThreadContent, revalidateTopicGroup } from './util'
 import { ThreadGroup, TopicCreate, TopicData, TopicUpdate } from '../types'
 import { formData as zFormData, text, repeatableOfType } from '../lib/zod-form-data'
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { createThread } from './_base'
 
 export const getTopics = async () => {
   const user = await mustAuth()
@@ -79,40 +80,29 @@ export const updateTopic = async (topicId: string, formData: FormData) => {
 }
 
 export const createTopicThread = async (topicId: string, formData: FormData) => {
+  const db_ = db()
   const user = await mustAuth()
   const form = zFormData({
     thread_content: text(),
+    refer_thread_ids: repeatableOfType(text()).optional(),
   }).parse(formData)
 
-  const topic = await db().query.topics.findFirst({
+  const topic = await db_.query.topics.findFirst({
     where: (table, { and, eq }) => and(eq(table.id, topicId), eq(table.user_id, user.userId)),
   })
   if (!topic) {
     throw new Error('topic not found')
   }
 
-  const { thread_content, group_name, command } = parseThreadContent(form.thread_content, 'lead')
-
-  if (command) {
-    await executeTopicCommand(command, topic)
-  } else {
-    if (!thread_content) {
-      throw new Error('thread content is required')
-    }
-    const [thread_content_short, thread_content_long] = splitThreadContent(thread_content)
-    await db()
-      .insert(schema.threads)
-      .values({
-        topic_id: topicId,
-        group_name,
-        thread_content: thread_content_short,
-        thread_content_long,
-        user_id: user.userId,
-      })
-      .returning()
-    if (group_name) {
-      await revalidateTopicGroup(topic)
-    }
+  const { thread_content, group_name } = parseThreadContent(form.thread_content, 'lead')
+  await createThread(user.userId, {
+    topic_id: topicId,
+    group_name,
+    thread_content,
+    refer_thread_ids: form.refer_thread_ids,
+  })
+  if (group_name) {
+    await revalidateTopicGroup(topic)
   }
   revalidatePath(`/topics/${topicId}`)
 }
@@ -129,8 +119,13 @@ export const getTopicThreads = async (topicId: string, { groupName }: { groupNam
 
   const threads = await db().query.threads.findMany({
     with: {
+      refers: true,
+      reverts: true,
       follows: {
         limit: 30,
+        with: {
+          refers: true,
+        },
       },
     },
     where: (table, { and, eq, isNull }) =>
@@ -138,16 +133,18 @@ export const getTopicThreads = async (topicId: string, { groupName }: { groupNam
         isNull(table.lead_thread_id),
         eq(table.topic_id, topicId),
         eq(table.user_id, user.userId),
+        eq(table.is_archived, false),
         groupName ? eq(table.group_name, groupName) : undefined
       ),
-    orderBy: (table, { desc }) => [desc(table.created_at)],
+    orderBy: (table, { desc }) =>
+      groupName ? [desc(table.pin_on_group), desc(table.created_at)] : [desc(table.created_at)],
     limit: 100,
   })
 
   const thread_groups_ = await db_
     .selectDistinct({ group_name: schema.threads.group_name })
     .from(schema.threads)
-    .where(eq(schema.threads.topic_id, topicId))
+    .where(and(eq(schema.threads.topic_id, topicId), eq(schema.threads.is_archived, false)))
 
   const group_config = topic.group_config || {}
   const thread_groups_set: Record<string, ThreadGroup> = {}

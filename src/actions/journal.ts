@@ -1,9 +1,10 @@
 'use server'
 
 import { db, schema } from '~/db'
-import { mustAuth, splitThreadContent } from './util'
-import * as zfd from '~/lib/zod-form-data'
+import { mustAuth, parseThreadContent } from './util'
 import { revalidatePath } from 'next/cache'
+import { ThreadColor } from '../types'
+import { createThread, threadFormSchema } from './_base'
 
 export const getJournalThreads = async (date: string) => {
   const user = await mustAuth()
@@ -19,8 +20,13 @@ export const getJournalThreads = async (date: string) => {
 
   const threads = await db_.query.threads.findMany({
     with: {
+      refers: true,
+      reverts: true,
       follows: {
-        limit: 10,
+        limit: 30,
+        with: {
+          refers: true,
+        },
       },
     },
     where: (table, { and, eq, isNull }) =>
@@ -38,6 +44,7 @@ export const getJournalThreads = async (date: string) => {
 export const createJournalThread = async (date: string, formData: FormData) => {
   const user = await mustAuth()
   const db_ = db()
+  const topic_name = `Journal ${date}`
   const builtin_topic_name = `journal_${date}`
 
   let topic = await db_.query.topics.findFirst({
@@ -48,24 +55,20 @@ export const createJournalThread = async (date: string, formData: FormData) => {
     topic = await db_
       .insert(schema.topics)
       .values({
-        topic_name: builtin_topic_name,
+        topic_name,
         builtin_topic_name,
         user_id: user.userId,
       })
       .returning()
       .get()
   }
-  const form = zfd
-    .formData({
-      thread_content: zfd.text(),
-    })
-    .parse(formData)
-  const [thread_content, thread_content_long] = splitThreadContent(form.thread_content)
-  const thread = await db_.insert(schema.threads).values({
+  const form = threadFormSchema.parse(formData)
+  const { group_name: color, thread_content } = parseThreadContent(form.thread_content, 'lead')
+  const thread = await createThread(user.userId, {
     topic_id: topic.id,
+    color: color as ThreadColor,
     thread_content,
-    thread_content_long,
-    user_id: user.userId,
+    refer_thread_ids: form.refer_thread_ids,
   })
   revalidatePath(`/journal/${date}`)
   return thread
