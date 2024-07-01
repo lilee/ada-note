@@ -11,7 +11,6 @@ import { ThreadContentMarkdown } from './thread-content-md'
 import { parseThreadContent } from './util'
 import { ThreadRefer } from './thread-refer'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card'
-import Image from 'next/image'
 
 export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
@@ -25,7 +24,6 @@ export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
     setEditing(false)
   }
 
-  const { thread_title, thread_content } = parseThreadContent(thread.thread_content)
   const timeFormat = thread.lead_thread_id ? 'MM/dd HH:mm' : 'yyyy/MM/dd HH:mm'
 
   return (
@@ -47,24 +45,7 @@ export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
             />
           ) : (
             <>
-              {thread.lead_thread_id ? (
-                <pre>
-                  {thread.thread_content}{' '}
-                  <ThreadContentMarkdown content={thread.thread_content_long} />
-                </pre>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-medium">{thread_title}</h2>
-                  </div>
-                  {thread_content && (
-                    <pre>
-                      {thread_content}{' '}
-                      <ThreadContentMarkdown content={thread.thread_content_long} />
-                    </pre>
-                  )}
-                </>
-              )}
+              <ThreadContent thread={thread} />
               <ThreadImages images={thread.images} />
               <ThreadRefers refers={thread.refers} />
               <ThreadRefers refers={thread.reverts} revert />
@@ -73,6 +54,27 @@ export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
         </div>
       </div>
     </div>
+  )
+}
+
+const ThreadContent = ({ thread }: { thread: ThreadData }) => {
+  if (thread.lead_thread_id && thread.thread_content) {
+    return (
+      <pre>
+        {thread.thread_content} <ThreadContentMarkdown content={thread.thread_content_long} />
+      </pre>
+    )
+  }
+  const { thread_title, thread_content } = parseThreadContent(thread.thread_content)
+  return (
+    <>
+      <h3 className="text-sm font-medium">{thread_title}</h3>
+      {thread_content && (
+        <pre>
+          {thread_content} <ThreadContentMarkdown content={thread.thread_content_long} />
+        </pre>
+      )}
+    </>
   )
 }
 
@@ -102,12 +104,16 @@ const ThreadImages = ({ images }: { images?: ThreadImageData[] }) => {
     return null
   }
   return (
-    <ul className="flex items-center">
+    <ul className="flex items-center gap-1">
       {images.map(image => (
-        <li key={image.image_id} className="flex items-center">
+        <li key={image.image_id}>
           <HoverCard>
             <HoverCardTrigger asChild>
-              <img src={`/image/${image.image_id}`} className="w-9 h-9 rounded" alt="" />
+              <img
+                src={`/image/${image.image_id}`}
+                className="w-12 h-12 rounded object-cover"
+                alt=""
+              />
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <img src={`/image/${image.image_id}`} loading="lazy" alt="" />
