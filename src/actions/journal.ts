@@ -22,10 +22,12 @@ export const getJournalThreads = async (date: string) => {
     with: {
       refers: true,
       reverts: true,
+      images: true,
       follows: {
         limit: 30,
         with: {
           refers: true,
+          images: true,
         },
       },
     },
@@ -69,6 +71,7 @@ export const createJournalThread = async (date: string, formData: FormData) => {
     color: color as ThreadColor,
     thread_content,
     refer_thread_ids: form.refer_thread_ids,
+    image_ids: form.image_ids,
   })
   revalidatePath(`/journal/${date}`)
   return thread

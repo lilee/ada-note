@@ -113,6 +113,27 @@ export const threadRefers = sqliteTable(
   })
 )
 
+export const threadImages = sqliteTable(
+  'thread_image',
+  {
+    thread_id: text('thread_id')
+      .references(() => threads.id, {
+        onDelete: 'cascade',
+      })
+      .notNull(),
+    image_id: text('image_id').notNull(),
+    created_at: integer('created_at', {
+      mode: 'timestamp',
+    })
+      .notNull()
+      .$default(() => new Date()),
+    user_id: text('user_id').references(() => users.id),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.thread_id, table.image_id] }),
+  })
+)
+
 export const userRelations = relations(users, ({ many }) => ({
   topics: many(topics),
   threads: many(threads),
@@ -149,6 +170,9 @@ export const threadRelations = relations(threads, ({ one, many }) => ({
   reverts: many(threadRefers, {
     relationName: 'revert',
   }),
+  images: many(threadImages, {
+    relationName: 'images',
+  }),
 }))
 
 export const threadReferRelations = relations(threadRefers, ({ one }) => ({
@@ -161,5 +185,13 @@ export const threadReferRelations = relations(threadRefers, ({ one }) => ({
     fields: [threadRefers.refer_thread_id],
     references: [threads.id],
     relationName: 'revert',
+  }),
+}))
+
+export const threadImageRelations = relations(threadImages, ({ one }) => ({
+  thread: one(threads, {
+    fields: [threadImages.thread_id],
+    references: [threads.id],
+    relationName: 'images',
   }),
 }))

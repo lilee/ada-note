@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { deleteThread, updateThread } from '~/actions/thread'
 
-import { ThreadData, ThreadReferData } from '~/types'
+import { ThreadData, ThreadImageData, ThreadReferData } from '~/types'
 import { ThreadForm } from './thread-form'
 import ThreadTime from './thread-time'
 import { TopicGroupButton } from '~/components/topic/topic-group-button'
 import { ThreadContentMarkdown } from './thread-content-md'
 import { parseThreadContent } from './util'
 import { ThreadRefer } from './thread-refer'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../ui/hover-card'
+import Image from 'next/image'
 
 export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
   const [isEditing, setEditing] = useState(false)
@@ -63,6 +65,7 @@ export const ThreadItem = ({ thread }: { thread: ThreadData }) => {
                   )}
                 </>
               )}
+              <ThreadImages images={thread.images} />
               <ThreadRefers refers={thread.refers} />
               <ThreadRefers refers={thread.reverts} revert />
             </>
@@ -89,6 +92,28 @@ const ThreadRefers = ({ refers, revert }: { refers?: ThreadReferData[]; revert?:
     <ul>
       {Array.from(linkThreadIds).map(threadId => (
         <ThreadRefer key={threadId} threadId={threadId} revert={revert} />
+      ))}
+    </ul>
+  )
+}
+
+const ThreadImages = ({ images }: { images?: ThreadImageData[] }) => {
+  if (!images || images.length == 0) {
+    return null
+  }
+  return (
+    <ul className="flex items-center">
+      {images.map(image => (
+        <li key={image.image_id} className="flex items-center">
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <img src={`/image/${image.image_id}`} className="w-9 h-9 rounded" alt="" />
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+              <img src={`/image/${image.image_id}`} loading="lazy" alt="" />
+            </HoverCardContent>
+          </HoverCard>
+        </li>
       ))}
     </ul>
   )

@@ -21,10 +21,12 @@ export const getThread = async (threadId: string) => {
         limit: 30,
         with: {
           refers: true,
+          images: true,
         },
       },
       refers: true,
       reverts: true,
+      images: true,
     },
     where: (table, { and, eq }) => and(eq(table.id, threadId), eq(table.user_id, user.userId)),
   })
@@ -53,6 +55,7 @@ export const updateThread = async (threadId: string, formData: FormData) => {
     thread_content,
     group_name,
     refer_thread_ids: form.refer_thread_ids,
+    image_ids: form.image_ids,
   })
   await revalidateTopicGroup(thread.topic_id)
   await revalidate(thread)
@@ -96,6 +99,7 @@ export const addFollowThread = async (threadId: string, formData: FormData) => {
     command,
     thread_content,
     refer_thread_ids: form.refer_thread_ids,
+    image_ids: form.image_ids,
   })
 
   await revalidate(leadThread)

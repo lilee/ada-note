@@ -5,4 +5,5 @@ interface CloudflareEnv {
   AUTH_SECRET: string
   AUTH_URL: string
   DB: D1Database
+  IMAGE_BUCKET: R2Bucket
 }

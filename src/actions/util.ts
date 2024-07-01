@@ -143,3 +143,21 @@ export const getTopicGroups = async (topicId: string) => {
   const groups = result.filter(r => r.group_name).map(r => r.group_name!.split('/')[0])
   return groups
 }
+
+const supportFiles = [
+  { type: 'image/png', ext: 'png' },
+  { type: 'image/jpeg', ext: 'jpeg' },
+  { type: 'image/gif', ext: 'gif' },
+  { type: 'image/webp', ext: 'webp' },
+  { type: 'image/jpg', ext: 'jpg' },
+  { type: 'image/x-icon', ext: 'ico' },
+  { type: 'application/x-ico', ext: 'ico' },
+  { type: 'image/vnd.microsoft.icon', ext: 'ico' },
+]
+const supportFile =
+  'image/png,image/jpeg,image/gif,image/webp,image/jpg,image/x-icon,application/x-ico,image/vnd.microsoft.icon'
+
+// 检查文件类是否支持
+export function checkFileType(val: string): boolean {
+  return supportFile.indexOf(val) > -1
+}

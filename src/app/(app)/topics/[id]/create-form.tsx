@@ -10,5 +10,7 @@ export const CreateForm = ({ topicId }: { topicId: string }) => {
   const handleSubmit = async (action: string, formData: FormData) => {
     await createTopicThread(topicId, formData)
   }
-  return <ThreadForm onSubmit={handleSubmit} defaultValue={group ? `[${group}]\n` : ''} />
+  return (
+    <ThreadForm key={group} onSubmit={handleSubmit} defaultValue={group ? `[${group}]\n` : ''} />
+  )
 }

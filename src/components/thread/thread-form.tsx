@@ -1,14 +1,15 @@
 'use client'
 
-import { Link2, Trash } from 'lucide-react'
+import { Image, Link2, Trash } from 'lucide-react'
 import { useEffect, useReducer, useRef, useState, useTransition } from 'react'
 import { Button } from '~/components/ui/button'
 import { TextareaExtend } from '~/components/ui/textarea-extend'
 import { useToast } from '~/components/ui/use-toast'
 import { ThreadData } from '~/types'
 import { ThreadRefer } from './thread-refer'
+import { uploadImage } from '../../actions/common'
 
-type ReferThreadsAction =
+type ThreadReferAction =
   | {
       type: 'init'
       threadIds?: string[]
@@ -16,6 +17,23 @@ type ReferThreadsAction =
   | {
       type: 'add' | 'remove'
       threadId: string
+    }
+  | {
+      type: 'clear'
+    }
+
+type ThreadImageAction =
+  | {
+      type: 'init'
+      imageIds?: string[]
+    }
+  | {
+      type: 'add'
+      imageIds: string[]
+    }
+  | {
+      type: 'remove'
+      imageId: string
     }
   | {
       type: 'clear'
@@ -33,21 +51,43 @@ export const ThreadForm = ({
 }) => {
   const { toast } = useToast()
   const [threadContent, setThreadContent] = useState('')
-  const [referThreads, dispatch] = useReducer((state: string[], action: ReferThreadsAction) => {
-    if (action.type === 'init') {
-      state = action.threadIds ?? []
-    } else if (action.type === 'add') {
-      if (state.includes(action.threadId)) {
-        toast({ description: `Thread has been referenced.` })
-      } else {
-        if (state.length >= 3) {
-          toast({ description: 'Up to three references are supported' })
+  const [referThreads, dispatchRefers] = useReducer(
+    (state: string[], action: ThreadReferAction) => {
+      if (action.type === 'init') {
+        state = action.threadIds ?? []
+      } else if (action.type === 'add') {
+        if (state.includes(action.threadId)) {
+          toast({ description: `Thread has been referenced.` })
         } else {
-          state = [...state, action.threadId]
+          if (state.length >= 3) {
+            toast({ description: 'Up to three references are supported' })
+          } else {
+            state = [...state, action.threadId]
+          }
+        }
+      } else if (action.type === 'remove') {
+        state = state.filter(threadId => threadId !== action.threadId)
+      } else if (action.type === 'clear') {
+        state = []
+      }
+      return state
+    },
+    []
+  )
+
+  const [images, dispatchImages] = useReducer((state: string[], action: ThreadImageAction) => {
+    if (action.type === 'init') {
+      state = action.imageIds ?? []
+    } else if (action.type === 'add') {
+      for (const imageId of action.imageIds) {
+        if (state.includes(imageId)) {
+          toast({ description: `Image has been referenced.` })
+        } else {
+          state = [...state, imageId]
         }
       }
     } else if (action.type === 'remove') {
-      state = state.filter(threadId => threadId !== action.threadId)
+      state = state.filter(imageId => imageId !== action.imageId)
     } else if (action.type === 'clear') {
       state = []
     }
@@ -63,15 +103,14 @@ export const ThreadForm = ({
         content = `[${thread.group_name}]\n${content}`
       }
       setThreadContent(content)
-      dispatch({ type: 'init', threadIds: thread.refers?.map(x => x.refer_thread_id) })
+      dispatchRefers({ type: 'init', threadIds: thread.refers?.map(x => x.refer_thread_id) })
+      dispatchImages({ type: 'init', imageIds: thread.images?.map(x => x.image_id) })
     } else {
       setThreadContent(defaultValue ?? '')
     }
   }, [])
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+  const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
       let action = 'create'
       if (thread) {
@@ -81,27 +120,36 @@ export const ThreadForm = ({
         }
       }
       await onSubmit(action, formData)
-      dispatch({ type: 'clear' })
+      dispatchRefers({ type: 'clear' })
+      dispatchImages({ type: 'clear' })
       setThreadContent('')
     })
   }
 
   const handleRefer = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
     const threadPrefix = 'thread://'
     navigator.clipboard.readText().then(text => {
       if (!text.startsWith(threadPrefix)) {
-        toast({
-          description: (
-            <>
-              Please <b>copy</b> a thread first.
-            </>
-          ),
-        })
+        const description = (
+          <>
+            Please <b>copy</b> a thread first.
+          </>
+        )
+        toast({ description })
         return
       }
       const threadId = text.substring(threadPrefix.length)
-      dispatch({ type: 'add', threadId })
+      dispatchRefers({ type: 'add', threadId })
+    })
+  }
+  const handleImages = (files: FileList | null) => {
+    if (!files) return
+    const formData = new FormData()
+    for (const file of files) {
+      formData.append('images', file)
+    }
+    uploadImage(formData).then(results => {
+      dispatchImages({ type: 'add', imageIds: results.map(x => x.key) })
     })
   }
 
@@ -109,14 +157,13 @@ export const ThreadForm = ({
   const isDeleted = thread && isEmpty
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="stack border rounded-lg p-2">
+    <form ref={formRef} action={handleSubmit} className="stack border rounded-lg p-2">
       <TextareaExtend
         name="thread_content"
         className="border-none p-0"
         placeholder="What's on your mind?"
         value={threadContent}
         onChange={event => {
-          console.log('change', event.target.value)
           setThreadContent(event.target.value)
         }}
         disabled={pending}
@@ -124,6 +171,14 @@ export const ThreadForm = ({
           formRef.current?.requestSubmit()
         }}
       />
+      <ul className="flex items-center gap-1">
+        {images.map(key => (
+          <li key={key} className="flex items-center">
+            <img src={`/image/${key}`} className="w-9 h-9 rounded" />
+            <input type="hidden" name="image_ids" value={key} />
+          </li>
+        ))}
+      </ul>
       <ul>
         {referThreads.map(threadId => (
           <div key={threadId} className="flex items-center">
@@ -132,7 +187,7 @@ export const ThreadForm = ({
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => dispatch({ type: 'remove', threadId })}
+              onClick={() => dispatchRefers({ type: 'remove', threadId })}
             >
               <Trash className="w-3 h-3 text-red-400" />
             </Button>
@@ -142,6 +197,7 @@ export const ThreadForm = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
             disabled={pending}
@@ -150,16 +206,15 @@ export const ThreadForm = ({
           >
             <Link2 className="h-4 w-4" />
           </Button>
+          <ImageUploader pending={pending} onChange={handleImages} />
         </div>
         <div className="flex items-center gap-2">
           {onCancel && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={e => {
-                e.preventDefault()
-                onCancel()
-              }}
+              type="button"
+              onClick={onCancel}
               disabled={pending}
               className="rounded-full"
             >
@@ -184,5 +239,42 @@ export const ThreadForm = ({
         </div>
       </div>
     </form>
+  )
+}
+
+const ImageUploader = ({
+  pending,
+  onChange,
+}: {
+  pending: boolean
+  onChange: (files: FileList | null) => void
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    fileInputRef.current?.click()
+  }
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    onChange(files)
+  }
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      disabled={pending}
+      className="rounded-full"
+      onClickCapture={handleClick}
+    >
+      <Image className="h-4 w-4" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        multiple
+        onChange={handleFile}
+      />
+    </Button>
   )
 }

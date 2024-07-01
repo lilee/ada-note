@@ -1,10 +1,10 @@
-import { formatDate } from 'date-fns/format'
+import { formatInTimeZone } from 'date-fns-tz'
 
 export default function ThreadTime({ time, format }: { time: Date; format: string }) {
-  const timeString = time.toLocaleString()
+  const timeString = time.toLocaleString('zh-CN', { timeZone: 'PRC' })
   return (
     <time dateTime={timeString} suppressHydrationWarning>
-      {formatDate(time, format)}
+      {formatInTimeZone(time, 'PRC', format)}
     </time>
   )
 }

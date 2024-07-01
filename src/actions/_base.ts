@@ -3,10 +3,12 @@ import * as zfd from '~/lib/zod-form-data'
 import { ThreadColor, ThreadData, ThreadUpdate } from '~/types'
 import { splitThreadContent } from './util'
 import { and, eq } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const threadFormSchema = zfd.formData({
-  thread_content: zfd.text(),
+  thread_content: zfd.text(z.string().default('')),
   refer_thread_ids: zfd.repeatableOfType(zfd.text()).optional(),
+  image_ids: zfd.repeatableOfType(zfd.text()).optional(),
 })
 
 type CreateThreadData = {
@@ -17,13 +19,16 @@ type CreateThreadData = {
   command?: string
   color?: ThreadColor
   refer_thread_ids?: string[]
+  image_ids?: string[]
 }
 
 type UpdateThreadData = {
   thread_content: string
   group_name?: string
   refer_thread_ids?: string[]
+  image_ids?: string[]
 }
+
 export const createThread = async (userId: string, data: CreateThreadData) => {
   const db_ = db()
   const [thread_content, thread_content_long] = splitThreadContent(data.thread_content)
@@ -45,6 +50,7 @@ export const createThread = async (userId: string, data: CreateThreadData) => {
     .returning()
   const thread = threads[0]
   await updateThreadRefers(thread, data.refer_thread_ids)
+  await updateThreadImages(thread, data.image_ids)
   return thread
 }
 
@@ -68,6 +74,7 @@ export const updateThread = async (userId: string, threadId: string, data: Updat
     .returning()
   const thread = threads[0]
   await updateThreadRefers(thread, data.refer_thread_ids)
+  await updateThreadImages(thread, data.image_ids)
 
   return thread
 }
@@ -90,5 +97,25 @@ const updateThreadRefers = async (thread: ThreadData, refer_thread_ids?: string[
   }))
   if (insertRefers && insertRefers.length > 0) {
     await db_.insert(schema.threadRefers).values(insertRefers)
+  }
+}
+
+const updateThreadImages = async (thread: ThreadData, image_ids?: string[]) => {
+  const db_ = db()
+  await db_
+    .delete(schema.threadImages)
+    .where(
+      and(
+        eq(schema.threadImages.thread_id, thread.id),
+        eq(schema.threadImages.user_id, thread.user_id!)
+      )
+    )
+  const inserts = image_ids?.map(image_id => ({
+    thread_id: thread.id,
+    image_id,
+    user_id: thread.user_id,
+  }))
+  if (inserts && inserts.length > 0) {
+    await db_.insert(schema.threadImages).values(inserts)
   }
 }

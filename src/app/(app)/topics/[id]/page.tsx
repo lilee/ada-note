@@ -24,7 +24,7 @@ const Page = async ({
 
   return (
     <div className="sm:w-full md:w-[768px] mx-auto flex flex-col gap-4 lg:gap-6">
-      <CreateForm topicId={topic.id} />
+      <CreateForm topicId={topic.id} key={group} />
       <TopicGroupSelect groups={thread_groups} groupConfig={topic.group_config} />
       <ThreadCardList threads={threads} />
     </div>

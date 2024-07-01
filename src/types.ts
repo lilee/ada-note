@@ -4,15 +4,18 @@ import * as schema from './db/schema'
 type ThreadSelect = typeof schema.threads.$inferSelect
 type TopicSelect = typeof schema.topics.$inferSelect
 type ThreadReferSelect = typeof schema.threadRefers.$inferSelect
+type ThreadImageSelect = typeof schema.threadImages.$inferSelect
 
 export type ThreadData = ThreadSelect & {
   follows?: ThreadSelect[]
   refers?: ThreadReferSelect[]
   reverts?: ThreadReferSelect[]
+  images?: ThreadImageSelect[]
 }
 export type ThreadUpdate = SQLiteUpdateSetSource<typeof schema.threads>
 export type ThreadColor = 'none' | 'highlight' | 'task'
 export type ThreadReferData = ThreadReferSelect
+export type ThreadImageData = ThreadImageSelect
 
 export type TopicData = TopicSelect
 export type TopicCreate = typeof schema.topics.$inferInsert

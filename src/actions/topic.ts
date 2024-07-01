@@ -7,7 +7,7 @@ import { formData as zFormData, text, repeatableOfType } from '../lib/zod-form-d
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { createThread } from './_base'
+import { createThread, threadFormSchema } from './_base'
 
 export const getTopics = async () => {
   const user = await mustAuth()
@@ -82,10 +82,7 @@ export const updateTopic = async (topicId: string, formData: FormData) => {
 export const createTopicThread = async (topicId: string, formData: FormData) => {
   const db_ = db()
   const user = await mustAuth()
-  const form = zFormData({
-    thread_content: text(),
-    refer_thread_ids: repeatableOfType(text()).optional(),
-  }).parse(formData)
+  const form = threadFormSchema.parse(formData)
 
   const topic = await db_.query.topics.findFirst({
     where: (table, { and, eq }) => and(eq(table.id, topicId), eq(table.user_id, user.userId)),
@@ -100,6 +97,7 @@ export const createTopicThread = async (topicId: string, formData: FormData) => 
     group_name,
     thread_content,
     refer_thread_ids: form.refer_thread_ids,
+    image_ids: form.image_ids,
   })
   if (group_name) {
     await revalidateTopicGroup(topic)
@@ -121,10 +119,12 @@ export const getTopicThreads = async (topicId: string, { groupName }: { groupNam
     with: {
       refers: true,
       reverts: true,
+      images: true,
       follows: {
         limit: 30,
         with: {
           refers: true,
+          images: true,
         },
       },
     },
