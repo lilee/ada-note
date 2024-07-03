@@ -1,9 +1,17 @@
 import { formatInTimeZone } from 'date-fns-tz'
 
-export default function ThreadTime({ time, format }: { time: Date; format: string }) {
+export default function ThreadTime({
+  time,
+  format,
+  className,
+}: {
+  time: Date
+  format: string
+  className?: string
+}) {
   const timeString = time.toLocaleString('zh-CN', { timeZone: 'PRC' })
   return (
-    <time dateTime={timeString} suppressHydrationWarning>
+    <time className={className} dateTime={timeString} suppressHydrationWarning>
       {formatInTimeZone(time, 'PRC', format)}
     </time>
   )

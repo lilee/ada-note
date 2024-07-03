@@ -4,12 +4,13 @@ import { parseThreadContent } from './util'
 import { cn } from '~/lib/utils'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '~/components/ui/sheet'
 import { ThreadCard } from './thread-card'
+import ThreadTime from './thread-time'
 
 export const ThreadRefer = ({ threadId, revert }: { threadId: string; revert?: boolean }) => {
   const { data } = useFetchAction(() => getThread(threadId), {
     cacheKey: `thread_${threadId}`,
   })
-  const className = cn('flex gap-1 items-center text-sm text-green-600 cursor-pointer', {
+  const className = cn('flex gap-2 items-center text-sm text-green-600 cursor-pointer', {
     'text-rose-600': revert,
   })
   if (!data) {
@@ -20,7 +21,14 @@ export const ThreadRefer = ({ threadId, revert }: { threadId: string; revert?: b
     <Sheet>
       <SheetTrigger asChild>
         <li className={className}>
-          {revert ? '←' : '→'} {thread_title}
+          <ThreadTime
+            className="text-gray-400 text-xs"
+            time={data.created_at}
+            format="MM/dd HH:mm"
+          />
+          <span>
+            {revert ? '←' : '→'} {thread_title}
+          </span>
         </li>
       </SheetTrigger>
       <SheetContent className="overflow-y-auto sm:max-w-none sm:w-full lg:w-[640px]">

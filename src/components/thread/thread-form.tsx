@@ -2,12 +2,12 @@
 
 import { Image, Link2, Trash } from 'lucide-react'
 import { useEffect, useReducer, useRef, useState, useTransition } from 'react'
+import { uploadImage } from '~/actions/common'
 import { Button } from '~/components/ui/button'
 import { TextareaExtend } from '~/components/ui/textarea-extend'
 import { useToast } from '~/components/ui/use-toast'
 import { ThreadData } from '~/types'
 import { ThreadRefer } from './thread-refer'
-import { uploadImage } from '../../actions/common'
 
 type ThreadReferAction =
   | {
@@ -93,6 +93,7 @@ export const ThreadForm = ({
     }
     return state
   }, [])
+  const [imageUploading, setImageUploading] = useState(0)
 
   const formRef = useRef<HTMLFormElement>(null)
   const [pending, startTransition] = useTransition()
@@ -148,8 +149,11 @@ export const ThreadForm = ({
     for (const file of files) {
       formData.append('images', file)
     }
+
+    setImageUploading(files.length)
     uploadImage(formData).then(results => {
       dispatchImages({ type: 'add', imageIds: results.map(x => x.key) })
+      setImageUploading(0)
     })
   }
 
@@ -172,6 +176,9 @@ export const ThreadForm = ({
         }}
       />
       <ul className="flex items-center gap-1">
+        {imageUploading > 0 && (
+          <div className="text-gray-500 text-sm">Uploading {imageUploading} images...</div>
+        )}
         {images.map(key => (
           <li key={key} className="flex items-center">
             <img src={`/image/${key}`} className="w-9 h-9 rounded" />
