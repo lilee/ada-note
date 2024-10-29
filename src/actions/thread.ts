@@ -154,7 +154,7 @@ export const reflectThread = async (threadId: string, prompt: string) => {
   })
 
   const result = await streamText({
-    model: openai('gpt-4o'),
+    model: openai('deepseek-chat'),
     messages,
     onFinish: async e => {
       await createThread(session.userId, {
@@ -164,6 +164,40 @@ export const reflectThread = async (threadId: string, prompt: string) => {
         thread_content: e.text,
       })
     },
+  })
+
+  const stream = createStreamableValue(result.textStream)
+  return stream.value
+}
+
+export const aiRewrite = async (threadContent: string) => {
+  const db_ = db()
+  const session = await mustAuth()
+  const user = await db_.query.users.findFirst({
+    where: (table, { eq }) => eq(table.id, session.userId),
+  })
+
+  const prompt_content = user?.reflect_prompts?.['rewrite']
+  if (!prompt_content) {
+    throw new Error('prompt not found')
+  }
+
+  const messages: CoreMessage[] = []
+  messages.push({
+    role: 'system',
+    content: prompt_content,
+  })
+  messages.push({
+    role: 'user',
+    content: threadContent,
+  })
+
+  const openai = createOpenAI({
+    baseURL: process.env.OPENAI_API_BASE,
+  })
+  const result = await streamText({
+    model: openai('deepseek-chat'),
+    messages,
   })
 
   const stream = createStreamableValue(result.textStream)

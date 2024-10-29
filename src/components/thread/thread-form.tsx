@@ -1,6 +1,6 @@
 'use client'
 
-import { Image, Link2, Trash } from 'lucide-react'
+import { Image, Link2, Trash, WandSparkles } from 'lucide-react'
 import { useEffect, useReducer, useRef, useState, useTransition } from 'react'
 import { uploadImage } from '~/actions/common'
 import { Button } from '~/components/ui/button'
@@ -8,6 +8,8 @@ import { TextareaExtend } from '~/components/ui/textarea-extend'
 import { useToast } from '~/components/ui/use-toast'
 import { ThreadData } from '~/types'
 import { ThreadRefer } from './thread-refer'
+import { aiRewrite } from '../../actions/thread'
+import { readStreamableValue } from 'ai/rsc'
 
 type ThreadReferAction =
   | {
@@ -95,6 +97,9 @@ export const ThreadForm = ({
   }, [])
   const [imageUploading, setImageUploading] = useState(0)
 
+  const [aiRewriteContent, setAiRewriteContent] = useState<string>()
+  const [aiRewriteDone, setAIRewriteDone] = useState<boolean>(false)
+
   const formRef = useRef<HTMLFormElement>(null)
   const [pending, startTransition] = useTransition()
   useEffect(() => {
@@ -156,6 +161,22 @@ export const ThreadForm = ({
       setImageUploading(0)
     })
   }
+  const handleAIRewrite = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    setAIRewriteDone(false)
+    setAiRewriteContent('AI Rewriting...')
+    const result = await aiRewrite(threadContent)
+    for await (const content of readStreamableValue(result)) {
+      setAiRewriteContent(content)
+    }
+    setAIRewriteDone(true)
+  }
+
+  const handleUseAIRewrite = () => {
+    setThreadContent(aiRewriteContent ?? '')
+    setAiRewriteContent(undefined)
+    setAIRewriteDone(false)
+  }
 
   const isEmpty = !threadContent && referThreads.length === 0
   const isDeleted = thread && isEmpty
@@ -175,6 +196,16 @@ export const ThreadForm = ({
           formRef.current?.requestSubmit()
         }}
       />
+      {aiRewriteContent && (
+        <pre className="!text-gray-600 text-sm border border-dashed p-2 rounded bg-gray-50 font-sans leading-6 break-all text-wrap whitespace-pre-wrap">
+          {aiRewriteContent}
+          {aiRewriteDone && (
+            <a className="text-blue-500 cursor-pointer" onClick={handleUseAIRewrite}>
+              使用
+            </a>
+          )}
+        </pre>
+      )}
       <ul className="flex items-center gap-1">
         {imageUploading > 0 && (
           <div className="text-gray-500 text-sm">Uploading {imageUploading} images...</div>
@@ -208,12 +239,20 @@ export const ThreadForm = ({
             variant="ghost"
             size="icon-sm"
             disabled={pending}
-            className="rounded-full"
             onClick={handleRefer}
           >
             <Link2 className="h-4 w-4" />
           </Button>
           <ImageUploader pending={pending} onChange={handleImages} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            disabled={pending}
+            onClick={handleAIRewrite}
+          >
+            <WandSparkles className="h-4 w-4" />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           {onCancel && (
@@ -270,7 +309,6 @@ const ImageUploader = ({
       variant="ghost"
       size="icon-sm"
       disabled={pending}
-      className="rounded-full"
       onClickCapture={handleClick}
     >
       <Image className="h-4 w-4" />

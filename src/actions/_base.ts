@@ -32,7 +32,11 @@ type UpdateThreadData = {
 export const createThread = async (userId: string, data: CreateThreadData) => {
   const db_ = db()
   const [thread_content, thread_content_long] = splitThreadContent(data.thread_content)
-  if (!thread_content && (!data.refer_thread_ids || data.refer_thread_ids.length === 0)) {
+  if (
+    !thread_content &&
+    !data.command &&
+    (!data.refer_thread_ids || data.refer_thread_ids.length === 0)
+  ) {
     throw new Error('thread content or refer thread ids is required')
   }
   const threads = await db_
